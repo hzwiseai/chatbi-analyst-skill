@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; font-src 'none'">
+<title>ChatBI 数据分析</title>
+<style>
+body{margin:0;background:#f4f6fa;color:#18263d;font:16px/1.6 system-ui,sans-serif}main{max-width:1120px;margin:36px auto;padding:0 24px}h1{font-size:30px;margin-bottom:4px}.subtitle,.source{color:#627084;font-size:13px}.card{background:white;padding:28px;margin:22px 0;border:1px solid #e0e6ef;border-radius:16px;box-shadow:0 5px 22px #19395b08}h2{font-size:20px;margin:0 0 18px}.chart{height:430px}.metrics{display:flex;gap:28px;flex-wrap:wrap}.metric{min-width:180px;padding:20px;background:#f2f7ff;border-radius:12px}.value{font-size:44px;font-weight:700;color:#215fcc}.label{font-size:14px;color:#53647c}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:10px;border-bottom:1px solid #e7ebf2;text-align:left;white-space:pre-wrap;overflow-wrap:anywhere}.scroll{overflow:auto}.warning{padding:10px 14px;background:#fff6df;color:#805d14;border-radius:8px}button{padding:8px 14px;border:1px solid #d0d9e7;background:white;border-radius:8px;cursor:pointer;margin-top:12px}summary{cursor:pointer;color:#416390}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.6 system-ui}.source{overflow-wrap:anywhere;margin-top:20px}@media(max-width:600px){main{padding:0 12px}.card{padding:18px}.chart{height:330px}}
+</style></head><body><main><h1>ChatBI 数据分析</h1><p class="subtitle">基于已授权查询结果 · 本地离线展示</p><div id="report"></div><div id="charts"></div></main>
+<script>/*__ECHARTS__*/</script>
+<script>
+const payload=/*__PAYLOAD__*/null;
+const node=(tag,text,cls)=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=String(text??'');if(cls)e.className=cls;return e};
+const table=(rows,columns)=>{const box=node('div',undefined,'scroll'),t=node('table'),head=node('tr');columns.forEach(c=>head.append(node('th',c)));t.append(head);rows.forEach(r=>{const tr=node('tr');columns.forEach(c=>tr.append(node('td',r[c])));t.append(tr)});box.append(t);return box};
+if(payload.report){const card=node('section',undefined,'card');card.append(node('h2','分析报告'));card.append(node('pre',typeof payload.report==='string'?payload.report:JSON.stringify(payload.report,null,2)));if(payload.run_id)card.append(node('p','run_id: '+payload.run_id,'source'));document.querySelector('#report').append(card)}
+payload.charts.forEach(item=>{
+ const cfg=item.chart_config||{},card=node('section',undefined,'card');card.append(node('h2',cfg.title?.text||'查询结果'));
+ const rows=cfg.raw_data||cfg.data||[],columns=cfg.columns||(rows.length?Object.keys(rows[0]):[]);
+ if(cfg.type==='kpi'||cfg.type==='kpi-group'){
+   const metrics=node('div',undefined,'metrics'),k=cfg.kpi_config||{};
+   const values=cfg.type==='kpi'?[{title:cfg.title?.text||k.value_column,value:k.value}]:(k.items||[]);
+   values.forEach(v=>{const m=node('div',undefined,'metric');m.append(node('div',v.title,'label'),node('div',typeof v.value==='number'?v.value.toLocaleString():v.value,'value'));metrics.append(m)});card.append(metrics);
+ }else if(cfg.type==='table'){card.append(table(rows,columns))}
+ else{
+   const view=node('div',undefined,'chart');card.append(view);document.querySelector('#charts').append(card);
+   const chart=echarts.init(view),option={};['legend','xAxis','yAxis','series','grid','dataset','color'].forEach(k=>{if(cfg[k]!==undefined)option[k]=cfg[k]});
+   option.tooltip={trigger:['pie','scatter'].includes(cfg.type)?'item':'axis',renderMode:'richText'};
+   chart.setOption(option);window.addEventListener('resize',()=>chart.resize());
+   const exportButton=node('button','下载图表 PNG');exportButton.onclick=()=>{const a=node('a');a.href=chart.getDataURL({type:'png',pixelRatio:2,backgroundColor:'#fff'});a.download='chatbi-chart.png';a.click()};card.append(exportButton);
+ }
+ (item.warnings||[]).forEach(w=>card.append(node('p',w,'warning')));
+ const source=item.source||{};card.append(node('p',`result_id: ${item.result_id||''} · 数据源: ${source.database_id??''} · 查询时间: ${item.executed_at||''}`,'source'));
+ const details=node('details');details.append(node('summary','查看查询依据与数据'),node('pre',item.sql||''));details.append(table(rows,columns));card.append(details);
+ document.querySelector('#charts').append(card);
+});
+</script></body></html>
