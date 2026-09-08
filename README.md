@@ -4,7 +4,7 @@
 
 **ClawChatBI 是面向业务场景的智能数据分析平台，让你通过自然语言提问，完成数据查询、指标分析和可视化。**
 
-产品网站：[www.clawchatbi.com](https://www.clawchatbi.com)
+产品网站：[clawchatbi.com](https://clawchatbi.com)
 
 你可以像与数据分析师交流一样提出问题，例如：
 
@@ -60,7 +60,7 @@ if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 
 ```dotenv
 # MCP 服务根地址，以管理员提供的地址为准
-CHATBI_SERVER_URL=https://www.clawchatbi.com
+CHATBI_SERVER_URL=https://clawchatbi.com
 
 # 你的 ChatBI 登录用户名
 CHATBI_USERNAME=your-username
